@@ -1,0 +1,10 @@
+*.aux
+*.bbl
+*.blg
+*.log
+*.toc
+*.synctex.gz
+*.pyc
+*.backup
+*.idea
+ros_packages/youbot_arm_control/**/*.txt

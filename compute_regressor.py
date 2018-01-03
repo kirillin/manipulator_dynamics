@@ -1,21 +1,89 @@
 # coding: utf-8
 #!/usr/bin/env python3
 
-#
-# Module makes regressor XI of
-#   tau = XI * CHI
-#   tau -- measured from real system
-#   CHI -- we want estimate and we do!!1!
-#
-
-
-import datetime as dt
 import sympy
+import numpy as np
+import time
+from datetime import timedelta
+from termcolor import colored
 
 from libs.equations import *
 from libs.regexps import *
+from libs.regressor_stuff import *
+from libs.utils import writeFile
 
-from numpy import pi
+
+PATH = 'xi/'
+
+
+def computeRegressor(zeros_in_regressor):
+    Xi = Regressor(zeros_in_regressor)
+    writeFile(PATH + 'Xi.py', str(Xi))
+
+
+def computeRegressorElements():
+
+    print(colored('Start computing of regressor {:}'.format(time.ctime()), 'magenta'))
+
+    zeros_in_regressor = np.ones((n, n * nL))
+    for i in range(n):
+        for j in range(i * nL):
+            zeros_in_regressor[i, j] = 0
+
+    for j in range(n):
+        for i in range(j, n):
+            start_time = time.time()
+            regressorElement = RegressorElement(j, i)
+            for k in range(nL):
+                st = time.time()
+
+                # compute operator L of lagrange function for [i, k, j]
+                expr_raw = operatorL(L[i][k], j)
+                expr_raw = expr_raw[0] if expr_raw.is_Matrix else expr_raw
+                len_expr_raw = len(str(expr_raw))
+
+                # simplify expression
+                expr = simplify(expr_raw)
+                # opL_sym = combsimp(powsimp(trigsimp(expand(expr_raw))))   # alternative method
+                len_expr = len(str(expr))
+
+                # make record about zeros elements (for removing zeros columns)
+                if expr.is_zero:
+                    zeros_in_regressor[j][(i * nL) + k] = 0
+
+                # if simplify was shit ;)
+                expr = expr_raw if len_expr_raw < len_expr else expr
+
+                # # подмена функций Theta(q_i) на theta_i
+                # for l in range(n):
+                #     opL_sym = opL_sym.subs(thi[l], theta[l])
+
+                # generate python code
+                py_expr_raw = sympy.printing.lambdarepr.lambdarepr(expr)
+
+                # some replaces, e.g. a_1 to a[0], Derivative(q_1(t), t) to dq[0]
+                py_expr = python_gencode(py_expr_raw)  # see in lins/regexps.py
+
+                regressorElement.addOpL(k, py_expr)
+
+                et = timedelta(seconds=time.time() - st)
+                print('--ji={0}{1}, k={2} function computed for {3:>15}\n\tSimplify length of expression from {4} to {5}'.format(j, i, k, str(et), len_expr_raw,len_expr))
+            writeFile(PATH + 'xi_{0}{1}.py'.format(j, i), str(regressorElement))
+            end_time = timedelta(seconds=time.time() - start_time)
+            print(colored('-Regressor element {0}{1} computed for {2:>15}'.format(j, i, str(end_time)), 'green'), '\n***')
+    print(colored('End computing of regressor {:}'.format(time.ctime()), 'magenta'))
+
+    # Файл с нулевыми элементами, в котором можно узреть нулевые столбцы
+    np.savetxt(PATH + 'zeros_in_regressor.txt', np.round(zeros_in_regressor,1))
+    f = open(PATH + 'zeros_in_regressor.txt', 'a')
+    f.write('\n')
+    zero_cols = []
+    for i in range(n * nL):
+        if sum(zeros_in_regressor[:, i]) == 0:
+            f.write('{}, '.format(i))
+            zero_cols.append(str(i))
+    f.close()
+    computeRegressor(zero_cols)
 
 
 def makeXImodules():
@@ -31,7 +99,7 @@ def makeXImodules():
     """
     regressor_zeros = [[1 for j in range(n * nL)] for i in range(5)]
     print('\nRegressor computing start ' + time.ctime())
-    for j in range(4, n):
+    for j in range(0, n):
         print('\tRow ' + str(j) + ' start at ' + time.ctime())
         for i in range(j, n):
             print('\t\tElement ' + str(i) + ' start at ' + time.ctime())
@@ -83,7 +151,6 @@ def makeXImodules():
 
                 len_ok = len(str(opL_sym))
                 print(len_ok)
-                time.sleep(0.42)
 
                 # if simplify was shit ;)
                 if len_raw < len_ok:
@@ -91,9 +158,9 @@ def makeXImodules():
 
                 " START CREATING method in MODULE "
 
-                # подмена функций Theta(q_i) на theta_i
-                for l in range(5):
-                    opL_sym = opL_sym.subs(thi[l], theta[l])
+                # # подмена функций Theta(q_i) на theta_i
+                # for l in range(n):
+                #     opL_sym = opL_sym.subs(thi[l], theta[l])
 
                 # generate python code
                 opL_py_raw = sympy.printing.lambdarepr.lambdarepr(opL_sym)
@@ -159,4 +226,7 @@ def makeXImodules():
 
 
 if __name__ == '__main__':
-    makeXImodules()
+    # makeXImodules()
+
+    computeRegressorElements()
+
