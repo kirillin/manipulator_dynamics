@@ -2,20 +2,17 @@
 #!/usr/bin/env python3
 import numpy as np
 
-from identification import Identification
-from libs.plot_stuff import plotTaus2, plotTaus, plotChis
-from libs.utils import getFileNamesContains
+from libs.identification import Identification
 from libs.initialization import *
+from libs.utils import getFileNamesContains
 
-A = (0.033, 0.155, 0.135, 0., 0.)
-D = (0.147, 0, 0, 0, 0.218)
-
-PATH = 'data_for_identification'
+PATH = 'data_for_identification_2dof'
 
 DATA_FILE_NAME = PATH + '/data/data_{:d}{:s}.txt'
 BIG_TAUs_FILE_NAME = PATH + '/bigs/{:s}big_tau{:d}.txt'
 BIG_XIs_FILE_NAME = PATH + '/bigs/{:s}big_xi{:d}.txt'
 EE_FILE_NAME = PATH + '/ee/EE{:d}.txt'
+
 
 def generateBigXisRaw(ident):
     for i in range(1, 2):
@@ -79,22 +76,23 @@ def getSD(chis):
 
     return sd, sdPer, avg
 
+
 if __name__ == '__main__':
     ident = Identification(A, D, thi)
 
     # 1. Выбросить лин. завис. столбцы
-    # ident.writeEE(EE_FILE_NAME, 50)
+    ident.writeEE(EE_FILE_NAME, 20)
 
     # 2.
-    generateBigXisRaw(ident)
-
+    # generateBigXisFilt(ident)
+    #
     # Chis = []
-    # for i in range(1,11):
-    #     datafileName = DATA_FILE_NAME.format(i, '')
-    #     bigXiFileName = BIG_XIs_FILE_NAME.format('raw/', i)
-    #     bigTauFileName = BIG_TAUs_FILE_NAME.format('raw/', i)
+    # for i in range(1,2):
+    #     datafileName = DATA_FILE_NAME.format(i, '_filt')
+    #     bigXiFileName = BIG_XIs_FILE_NAME.format('filt/', i)
+    #     bigTauFileName = BIG_TAUs_FILE_NAME.format('filt/', i)
     #     #
-    #     Q, dQ, ddQ, Tau, T = ident.readIdentDataRaw(datafileName)
+    #     Q, dQ, ddQ, Tau, T = ident.readIdentData(datafileName)
     #     #
     #     bigXi = ident.readBigXi(bigXiFileName)
     #     bigTau = ident.readBigTau(bigTauFileName)
@@ -112,6 +110,7 @@ if __name__ == '__main__':
     #     # estChi = prepareBigXi *(bigTau)
     #
     #     bigXiT = np.transpose(bigXi)
+    #     # print(np.linalg.det (np.matmul(bigXiT, bigXi)))
     #     prepareBigXi = np.matmul(np.linalg.inv(np.matmul(bigXiT, bigXi)), bigXiT)
     #
     #     estChi = np.matmul(prepareBigXi, bigTau)
@@ -122,11 +121,12 @@ if __name__ == '__main__':
     #     estTau = np.array(np.hsplit(estTau, len(estTau) / 5))
     #
     #     Tau = np.array(Tau)
-    #     #plotTaus(Tau, estTau, T, T)
+    #     print(len(Tau), len(T), len(estTau))
+    #     plotTaus(Tau, estTau, T, range(264))
 
     # fileNameChis = 'chis_filt.txt'
     # # np.savetxt(fileNameChis, np.array(Chis))
-    #
+    # #
     # # FILTRED DATA
     # f = open(fileNameChis, 'r')
     # chisFilt = np.loadtxt(f)

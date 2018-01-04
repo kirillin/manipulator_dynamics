@@ -2,24 +2,24 @@
 """
     Different stuff for identification of vector chi
 """
-import numpy as np
 import time
 
+import numpy as np
+
+from libs.initialization import *
 from libs.plot_stuff import plot
 from libs.utils import rmZeros, printWastedTime
-from xifull import XIFull
-from libs.initialization import *
-
+from regressors.xi_num import XiNum
 
 
 class Identification:
     """
         m -- quantity rows in input data
-        n -- 5
+        n -- quantity joints
     """
 
-    def __init__(self, a, d, theta):
-        self.xi = XIFull(a, d, theta)
+    def __init__(self, a, d, theta=0):
+        self.xi = XiNum(a, d)
         self.wellColNums = self.xi.getWellColNums()
         # DH parameters
         self.a = a
@@ -188,16 +188,15 @@ class Identification:
         file = open(fileName, 'r')
         rawData = np.loadtxt(file)
         rawData = rawData.T
-        qs = rawData[0:5].T
-        dqs = rawData[5:10].T
-        ddqs = rawData[10:15].T
-        taus = rawData[15:20].T
-        ts = rawData[20].T
+        qs = rawData[0:n].T
+        dqs = rawData[n:2*n].T
+        ddqs = rawData[2*n:3*n].T
+        taus = rawData[3*n:4*n].T
+        ts = rawData[4*n].T
 
         endTime = time.time()
         deltaTime = endTime - timeStart
-        printWastedTime(timeStart, endTime, deltaTime,
-                             'Reading Ident. data:')
+        printWastedTime(timeStart, endTime, deltaTime, 'Reading Ident. data:')
         if isPlot:
             plot(qs, dqs, ddqs, taus, ts)
         return qs, dqs, ddqs, taus, ts
@@ -220,19 +219,21 @@ class Identification:
         np.savetxt(fileName, bigTau)
         print('Big Tau was wrote!')
 
-    def writeEE(self, fileName, n=14):
+    def writeEE(self, fileName, k=14):
         print('Start generation EE files!')
-        for i in range(n):
-            q = np.random.rand(5) * 4 - 2
-            dq = np.random.rand(5) * 4 - 2
-            ddq = np.random.rand(5) * 4 - 2
+        for i in range(k):
+            q = np.random.rand(n) * 4 - 2
+            dq = np.random.rand(n) * 4 - 2
+            ddq = np.random.rand(n) * 4 - 2
 
             xi = self.xi.getXiNumExCompressed(q, dq, ddq)
             xiT = xi.T
 
             fname = fileName.format(i)
             np.savetxt(fname, xiT)
-        print('{:d} EE files were generated success!'.format(n))
+        print('{:d} EE files were generated success!'.format(k))
+        print('Liner cols: {0}'.format(str(self.xi.getLinerCols())))
+        print('Well cols: {0}'.format(str(self.xi.getWellColNums())))
 
     def computeDDq(self, dq_prev, dq_next, t_prev, t_next):
         ddq = []
@@ -248,13 +249,13 @@ class Identification:
         """
         file = open(fileName, 'r')
         qs, dqs, ddqs, taus, ts = [], [], [], [], []
-        ddqs.append([0., 0., 0., 0., 0.])    # first ddq
+        ddqs.append([0. for i in range(n)])    # first ddq
         for i, line in enumerate(file):
             raw = line.split(' ')
-            q = list(map(float, raw[0:5]))
-            dq = list(map(float, raw[5:10]))
-            tau = list(map(float, raw[10:15]))
-            t = float(raw[15])
+            q = list(map(float, raw[0:n]))
+            dq = list(map(float, raw[n:2*n]))
+            tau = list(map(float, raw[2*n:3*n]))
+            t = float(raw[3*n])
             qs.append(q)
             dqs.append(dq)
             taus.append(tau)
@@ -271,82 +272,3 @@ class Identification:
         file.close()
         ddqs.append([0, 0, 0, 0, 0])
         return qs, dqs, ddqs, taus, ts
-
-if __name__ == '__main__':
-    path = 'data_for_identification'
-
-    dataFileName = path + '/data/data_{:d}.txt'
-    bigTauFileName = path + '/bigs/big_tau_{:d}.txt'
-    bigXiFileName = path+ '/bigs/big_xi_{:d}.txt'
-    EEfileName = path + '/ee/EE{:d}.txt'
-
-    A = (0.033, 0.155, 0.135, 0., 0.)
-    D = (0.147, 0, 0, 0, 0.218)
-    ident = Identification(A, D, thi)
-    #
-    # q = (0,0,0,0,0)
-    # dq = (0, 0, 0, 0, 0)
-    # ddq = (0, 0, 0, 0, 0)
-
-    # ar = np.arange(10).reshape(10, 1)
-    # taus = np.concatenate((ar,ar,ar,ar,ar), 1)
-    #
-    # bigXi = ident.getBigXi([q, q], [dq, dq], [ddq, ddq])
-    # bigXisLite = ident.getBigXisLite(bigXi)
-    # for i in range(2):
-    #     print(bigXisLite[i].shape)
-
-    # for i in range(len(bigXi)):
-    #     print(bigXisLite[i].shape)
-
-    # q = np.random.rand(5) * 4 - 2
-    # dq = np.random.rand(5) * 4 - 2
-    # ddq = np.random.rand(5) * 4 - 2
-    #
-    # taus = np.array([
-    #     [1, 2, 3, 4, 5],
-    #     [4, 5, 6, 7, 8],
-    #     [7, 8, 9, 10, 11],
-    #     [10, 11, 12, 12, 13]
-    # ])
-    #
-    # bigXisLite = np.array([
-    #     [
-    #         [1, 2, 3],
-    #         [6, 7, 8],
-    #         [11, 12, 13],
-    #         [16, 17, 18],
-    #         [21, 22, 23]
-    #     ],
-    #     [
-    #         [26, 27, 28],
-    #         [31, 32, 33],
-    #         [36, 37, 38],
-    #         [41, 42, 43],
-    #         [46, 47, 48]
-    #     ]
-    # ])
-    #
-    # q = (-0.003362, - 0.000146,0.000535, 0.001290,0.004798)
-    # dq = (0.001441, -0.000631, - 0.008836,0.051949,0.001979)
-    # ddq = (- 0.255993,0.248325, - 0.071348,1.710817,0.779999)
-    #
-    # bigXi = ident.getBigXi([q,q],[dq,dq],[ddq,ddq])
-    #
-    # bigXisLite = ident.getBigXisLite(bigXi)
-    # print(bigXisLite.shape)
-    # print(bigXisLite[0])
-
-
-    # fileName = 'data_for_identification/data_1_filt.txt'
-    # data = ident.readIdentData(fileName, isPlot=False)
-
-    # bigXi = np.ndarray(20).reshape(4,5)
-    # fileName = 'data_for_identification/processed_data/big_xi_1.txt'
-    # ident.writeBigXi(fileName, bigXi)
-
-    # bigTau = np.ndarray(20).reshape(20,1)
-    # fileName = 'data_for_identification/processed_data/big_tau_1.txt'
-    # ident.writeBigXi(fileName, bigTau)
-
-    ident.writeEE(EEfileName, 20)
