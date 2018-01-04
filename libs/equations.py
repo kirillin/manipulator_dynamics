@@ -111,7 +111,7 @@ def getJv(i):
         getJv(0) = J_{v1}
     """
     j = Matrix(Jv[i])
-    j = j.reshape(5, 3)
+    j = j.reshape(n, 3)
     return transpose(j)
 
 
@@ -120,7 +120,7 @@ def getJomega(i):
         getJomega(0) = J_{omega1}
     """
     j = Matrix(Jomega[i])
-    j = j.reshape(5, 3)
+    j = j.reshape(n, 3)
     return transpose(j)
 
 
@@ -221,6 +221,87 @@ def operatorL(L, j, simp=False):
     if simp:
         opL = mySimple(opL)
     return opL
+
+
+def getTensor(i):
+    """ getTensor(0) = I_1"""
+    return Matrix([[Ixx[i], Ixy[i], Ixz[i]],
+                    [Ixy[i], Iyy[i], Iyz[i]],
+                    [Ixz[i], Iyz[i], Izz[i]]])
+
+
+def get_riici(i):
+    """ get_riici(0) = rc_1 """
+    return Matrix([xc[i], yc[i], zc[i]])
+
+
+def get_r0ici(i):
+    """ get_riici(0) = rc_1 """
+    return R(0, i) * get_riici(i)
+
+
+def getJx(i):
+    return - (getJv(i)[2,:]).T * getJomega(i)[1,:] + (getJv(i)[1,:]).T * getJomega(i)[2,:]
+
+
+def getJy(i):
+    return (getJv(i)[2,:]).T * getJomega(i)[0,:] - (getJv(i)[0,:]).T * getJomega(i)[2,:]
+
+
+def getJz(i):
+    return - (getJv(i)[1,:]).T * getJomega(i)[0,:] + (getJv(i)[0,:]).T * getJomega(i)[1,:]
+
+
+def getD(simp=False):
+    D = Matrix([[0 for i in range(n)] for j in range(n)])
+    for i in range(n):
+        D += m[i] * getJv(i).T * getJv(i) + getJomega(i).T * R(0, i+1) * getTensor(i) * R(0, i+1).T * getJomega(i) + 2 * (m[i] * get_r0ici(i+1))[0] * getJx(i) + 2 * (m[i] * get_r0ici(i+1))[1] * getJy(i) + 2 * (m[i] * get_r0ici(i+1))[2] * getJz(i)
+    D = D.as_mutable()
+    D[0,1] = Rational(1,2) * (D[1,0] + D[0,1])
+    D[1,0] = D[0,1]
+    if simp:
+        D = mySimple(D)
+    return D
+
+
+def getC(D, simp=False):
+    # Coriolis and Centrifugal matrix
+    C = [[[0 for k in range(n)] for j in range(n)] for i in range(n)]
+    for i in range(n):
+        for j in range(n):
+            for k in range(n):
+                C[i][j][k] = Rational(1, 2) * (diff(D[k,j], q[i]) + diff(D[k,i], q[j]) - diff(D[i,j], q[k]))
+
+    C_new = Matrix([[0 for k in range(n)] for j in range(n)])
+    for k in range(n):
+        for j in range(n):
+            s = 0
+            for i in range(n):
+                s += C[i][j][k] * dq[i]
+            C_new[k,j] = s
+    if simp:
+        C_new = mySimple(C_new)
+    return C_new
+
+
+def getU(simp=False):
+    """ potential energy """
+    U = 0
+    for i in range(n):
+        U += (m[i] * get_g(i+1).T * get_ri_0To(i+1) + get_g(i+1).T * (m[i] * get_riici(i+1)))[0]
+    if simp:
+        U = mySimple(U)
+    return -U
+
+
+def getG(U, simp=False):
+    """gravitty matrix"""
+    G = [0 for j in range(n)]
+    for j in range(n):
+        G[j] = diff(U, q[j])
+    if simp:
+        G = mySimple(G)
+    return G
 
 init_jacobians()
 compute_lagrange_function()
