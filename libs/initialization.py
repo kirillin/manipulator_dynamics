@@ -4,13 +4,14 @@
     Module contains initialization everything
 """
 
-from sympy import Matrix, Symbol, Function, diff, pi
+from sympy import Matrix, Symbol, Function, diff
+from numpy import pi
 
 # !!! check manipulator here, please
 manipulator = {
     0: 'PLANAR_2DOF',
     1: 'KUKA_YOUBOT'
-}[0]
+}[1]
 
 #########################################
 ##### DON'T TOUCH ANITHING BELOW ########
@@ -28,7 +29,7 @@ if manipulator is 'PLANAR_2DOF':
     A = (0.5, 0.4)
     D = (0., 0.)
     ALPHA = (0, pi / 2)
-    DELTA = (0., 0.)
+    DELTA = (60 * pi / 180, 40 * pi / 180)
 elif manipulator is 'KUKA_YOUBOT':
     n = 5  # quantity of links
     G0 = [0, 0, -g]
@@ -73,7 +74,7 @@ for i in range(0, n):
 ai = [a[i] if A[i] else 0 for i in range(len(A))]
 di = [d[i] if D[i] else 0 for i in range(len(D))]
 alphai = [ALPHA[i] if ALPHA[i] else 0 for i in range(len(ALPHA))]
-thi = [delta[0] - q[0], delta[1] - q[1]]
+# thi = [delta[0] - q[0], delta[1] - q[1]]
 
 
 """ !!! use this block if don't work simplifying """
@@ -85,8 +86,7 @@ class Theta(Function):
         else:
             return 0
 
-# thi = [Theta(q[i]) for i in range(5)]
-
+thi = [Theta(q[i]) for i in range(n)]
 
 # Инициализация простых, но нужных вещей...
 O = Matrix([0, 0, 0])           # используется при инициализации Якобианов

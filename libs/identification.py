@@ -18,8 +18,8 @@ class Identification:
         n -- quantity joints
     """
 
-    def __init__(self, a, d, theta=0):
-        self.xi = XiNum(a, d)
+    def __init__(self, a, d, delta):
+        self.xi = XiNum(a, d, delta)
         self.wellColNums = self.xi.getWellColNums()
         # DH parameters
         self.a = a
@@ -219,9 +219,35 @@ class Identification:
         np.savetxt(fileName, bigTau)
         print('Big Tau was wrote!')
 
+    def writeEE2(self, fileName, k=14):
+        print('Start generation EE files!')
+        bigXi = np.zeros(k*n)
+
+        q = np.random.rand(n) * 4 - 2
+        dq = np.random.rand(n) * 4 - 2
+        ddq = np.random.rand(n) * 4 - 2
+        bigXi = self.xi.getXiNumExCompressed(q, dq, ddq)
+
+        for i in range(1, k):
+            print(i*100/k)
+            q = np.random.rand(n) * 4 - 2
+            dq = np.random.rand(n) * 4 - 2
+            ddq = np.random.rand(n) * 4 - 2
+
+            xi = self.xi.getXiNumExCompressed(q, dq, ddq)
+            bigXi = np.concatenate((bigXi, xi), axis=0)
+
+        np.savetxt(fileName, bigXi.T)
+
+        print('{:d} EE files were generated success!'.format(k))
+        print('Liner cols: {0}'.format(str(self.xi.getLinerCols())))
+        print('Well cols: {0}; qty: {1}'.format(str(self.xi.getWellColNums()), len(self.xi.getWellColNums())))
+
     def writeEE(self, fileName, k=14):
         print('Start generation EE files!')
+        status = 0
         for i in range(k):
+            print(i*100/k)
             q = np.random.rand(n) * 4 - 2
             dq = np.random.rand(n) * 4 - 2
             ddq = np.random.rand(n) * 4 - 2
@@ -233,11 +259,11 @@ class Identification:
             np.savetxt(fname, xiT)
         print('{:d} EE files were generated success!'.format(k))
         print('Liner cols: {0}'.format(str(self.xi.getLinerCols())))
-        print('Well cols: {0}'.format(str(self.xi.getWellColNums())))
+        print('Well cols: {0}; qty: {1}'.format(str(self.xi.getWellColNums()), len(self.xi.getWellColNums())))
 
     def computeDDq(self, dq_prev, dq_next, t_prev, t_next):
         ddq = []
-        for i in range(5):
+        for i in range(n):
             lim = (dq_next[i] - dq_prev[i]) / (t_next - t_prev)
             ddq.append(lim)
         return ddq
@@ -265,7 +291,7 @@ class Identification:
                 dq_next = dqs[i]
                 t_prev = ts[i-2]
                 t_next = ts[i]
-                ddq = self.computeDDq(dq_prev, dq_next, t_prev, t_next)
+                ddq = self.computeDDq(dq_prev, dq_next, t_prev, t_next+0.0000000001)
                 ddqs.append(ddq)
 
         print('data from ' + fileName + ' was read!')

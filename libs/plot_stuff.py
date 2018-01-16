@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-
+from libs.initialization import n
 
 def plot(qs,dqs,ddqs,taus,ts):
     f, (row1, row2, row3, row4) = plt.subplots(4, 5, sharex='col', sharey='row')
@@ -15,8 +15,8 @@ def plot(qs,dqs,ddqs,taus,ts):
 
 
 def plotTaus(taus1, taus2, ts1, ts2):
-    f, (row1, row2) = plt.subplots(2, 5, sharex='col', sharey='row')
-    for i in range(5):
+    f, (row1, row2) = plt.subplots(2, n, sharex='col', sharey='row')
+    for i in range(n):
         row1[i].plot(ts1, [row[i] for row in taus1], linewidth=0.5, color='b')
         row2[i].plot(ts2, [row[i] for row in taus2], linewidth=0.5, color='r')
         row1[i].grid(True)

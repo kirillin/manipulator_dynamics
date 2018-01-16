@@ -53,6 +53,11 @@ def getFileNamesContains(string, path):
             wellFileNames.append(fn)
     return wellFileNames
 
+def writeFile(name, what):
+    file = open(name, 'w')
+    file.write(what)
+    file.close()
+
 if __name__ == '__main__':
     path = '/media/data/evo/robotics_report/ros_packages/youbot_arm_control/calculations/data_for_identification/bigs/raw'
     x = getFileNamesContains('', path)

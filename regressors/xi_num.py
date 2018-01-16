@@ -4,15 +4,20 @@
 """
 import numpy as np
 
-from regressors.PLANAR_2DOF_xi.Xi import Xi
-from libs.initialization import nL, A, D
+from regressors.KUKA_YOUBOT_xi.Xi import Xi
+# from regressors.PLANAR_2DOF_xi.Xi import Xi
+from libs.initialization import nL, A, D, DELTA
 
 
 class XiNum(Xi):
 
-    def __init__(self, a, d):
-        super().__init__(a, d)
-        self._linerCols += []
+    def __init__(self, a, d, delta):
+        super().__init__(a, d, delta)
+        self._linerCols = []
+        #self._linerCols = [3,4,5,7,8,9,16,18,20,21,22,23,0,1,6]   # good 2dof
+        self._linerCols = [2,3,4,7,8,0,1,5,20,28,10,14,15,18,22,32,42,45,60]    # Youbot
+        # self._linerCols += [6,0,14]
+        # self._linerCols = [3,4,5,7,8,9,16,18,20,21,22,23,6,0,14] #6 10
 
     def getLinerCols(self):
         return self._linerCols
@@ -56,5 +61,7 @@ class XiNum(Xi):
 
 
 if __name__ == '__main__':
-    xi_num = XiNum(A, D)
-    print(xi_num.getXiNum((1, 1), (1, 1), (1, 1)))
+    xi_num = XiNum(A, D, DELTA)
+    # print(xi_num.getXiNumEx([1.1, -0.1], [0.03, -0.7], [0.4, 0.001]))
+    q = dq = ddq = (1,2,3,4,5)
+    print(len(xi_num.getXiNumExCompressed(q,dq,ddq)[0]))

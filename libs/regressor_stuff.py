@@ -57,18 +57,20 @@ class Method:
 
 class RegressorElement:
 
-    IMPORTS = 'from numpy import cos, sin, sqrt, tan, zeros\n\n'
+    IMPORTS = 'from numpy import cos, sin, sqrt, tan, zeros, array\n\n'
 
     CONSTRUCTOR_ARGS = ['q', 'dq', 'ddq', 'a', 'd', 'delta']
     CONSTRUCTOR_ARGS_INITS = [tuple(0 for i in range(n)) for arg in range(len(CONSTRUCTOR_ARGS))]
     CONSTRUCTOR_BODY = ['self.{0} = {0}'.format(arg) for arg in CONSTRUCTOR_ARGS]
 
-    OPL_X_METHOD_ARGS = ['q', 'dq', 'ddq', 'a', 'd', 'delta']
+    OPL_X_METHOD_ARGS = ['q', 'dq', 'ddq', 'a', 'd', 'theta']
     OPL_X_METHOD_BODY = ['opL_{0} = {1}',
                          'return opL_{0}']
 
+    GET_XI_METHOD_ARGS = ['q', 'dq', 'ddq']
     GET_XI_METHOD_BODY = ['XI = zeros({0})'.format(nL)] + \
-                         ['XI[{0}] = self.opL{0}(q, dq, ddq, self.a, self.d, self.delta)'.format(i) for i in range(nL)] + \
+                         ['theta = array(self.delta) - array(q)'] + \
+                         ['XI[{0}] = self.opL{0}(q, dq, ddq, self.a, self.d, theta)'.format(i) for i in range(nL)] + \
                          ['return XI']
 
     def __init__(self, j, i):
@@ -85,7 +87,7 @@ class RegressorElement:
 
     def addGetter(self):
         getter = Method('getXi', body=RegressorElement.GET_XI_METHOD_BODY,
-                        args=RegressorElement.OPL_X_METHOD_ARGS[0:3])
+                        args=RegressorElement.GET_XI_METHOD_ARGS)
         self.regressorElementClass.addMethod(getter)
 
     def __str__(self):
@@ -97,7 +99,7 @@ class Regressor:
 
     IMPORTS = 'import numpy as np\n'
 
-    CONSTRUCTOR_ARGS = ['a', 'd']
+    CONSTRUCTOR_ARGS = ['a', 'd', 'delta']
     CONSTRUCTOR_BODY = []
 
     GETTER_ARGS = ['q', 'dq', 'ddq']
@@ -107,7 +109,7 @@ class Regressor:
         'for i in range(n):',
         '\tfor j in range(n):',
         '\t\tif self._xi[i][j] != 0:',
-        '\t\t\txi_ij = self._xi[i][j].getXi(q, dq, ddq)',
+        '\t\t\txi_ij = self._xi[i][j].getXi(q, dq, ddq, theta)',
         '\t\t\txi = np.concatenate((xi, xi_ij))',
         '\t\telse:',
         '\t\t\txi = np.concatenate((xi, np.zeros({0})))'.format(nL),
@@ -116,7 +118,7 @@ class Regressor:
 
     GET_WELL_COLS_BODY = [
         'all = set(range({0}))'.format(n * nL),
-        'well = all.difference(self.__linerCols)',
+        'well = all.difference(self._linerCols)',
         'return list(well)'
     ]
 
@@ -126,8 +128,8 @@ class Regressor:
         constructor = Method('__init__', Regressor.CONSTRUCTOR_BODY, args=Regressor.CONSTRUCTOR_ARGS)
         self.regressorClass = Class('Xi', constructor=constructor, imports=Regressor.IMPORTS)
 
-        getter = Method('getXi', args=['q', 'dq', 'ddq'], body=Regressor.GETTER_BODY)
-        self.regressorClass.addMethod(getter)
+        # getter = Method('getXi', args=['q', 'dq', 'ddq'], body=Regressor.GETTER_BODY)
+        # self.regressorClass.addMethod(getter)
 
         getWellColNums = Method('getWellColNums', body=Regressor.GET_WELL_COLS_BODY)
         self.regressorClass.addMethod(getWellColNums)

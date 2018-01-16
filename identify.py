@@ -6,7 +6,8 @@ from libs.identification import Identification
 from libs.initialization import *
 from libs.utils import getFileNamesContains
 
-PATH = 'data_for_identification_2dof'
+PATH = 'data_for_identification_Youbot'
+# PATH = 'data_for_identification_2dof'
 
 DATA_FILE_NAME = PATH + '/data/data_{:d}{:s}.txt'
 BIG_TAUs_FILE_NAME = PATH + '/bigs/{:s}big_tau{:d}.txt'
@@ -78,12 +79,15 @@ def getSD(chis):
 
 
 if __name__ == '__main__':
-    ident = Identification(A, D, thi)
+    delta = np.array(DELTA)
+    ident = Identification(A, D, delta)
 
     # 1. Выбросить лин. завис. столбцы
-    ident.writeEE(EE_FILE_NAME, 20)
+    # ident.writeEE2(PATH + '/randomBigXi/rndBigXiT.txt', 20)
+    # ident.writeEE(EE_FILE_NAME, 20)
 
     # 2.
+    generateBigXisRaw(ident)
     # generateBigXisFilt(ident)
     #
     # Chis = []

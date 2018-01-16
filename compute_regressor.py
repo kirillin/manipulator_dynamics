@@ -13,6 +13,9 @@ from libs.regressor_stuff import *
 from libs.utils import writeFile
 from libs.initialization import *
 
+from libs.Watchdog import Watchdog
+
+SIMPIFY_TIMEOUT = 3 * 60 * 60 # [sec]
 PATH = 'regressors/' + manipulator + '_xi/'
 
 try:
@@ -29,11 +32,11 @@ def computeRegressor(path, zeros_in_regressor=[]):
 
 
 def computeRegressorElements():
-
+    regressorScilab = open('xi', 'w')
     print(colored('Start computing of regressor {:}'.format(time.ctime()), 'magenta'))
 
     zeros_in_regressor = np.ones((n, n * nL))
-    for i in range(n):
+    for i in range(n-1, n):
         for j in range(i * nL):
             zeros_in_regressor[i, j] = 0
 
@@ -41,19 +44,40 @@ def computeRegressorElements():
         for i in range(j, n):
             start_time = time.time()
             regressorElement = RegressorElement(j, i)
+            print(colored('-Regressor element {0}{1} computing start at {2:>15}'.format(j, i, time.ctime()), 'green'))
             for k in range(nL):
                 st = time.time()
-
+                print('--ji={0}{1}, k={2}'.format(j, i, k))
+                
                 # compute operator L of lagrange function for [i, k, j]
                 expr_raw = operatorL(L[i][k], j)
                 expr_raw = expr_raw[0] if expr_raw.is_Matrix else expr_raw
                 len_expr_raw = len(str(expr_raw))
-
-                expr_raw.subs([delta[0], delta[1]], [DELTA[0], DELTA[1]])
-
+                print('\tL was calculated!', end=' ', flush=True)
+            
                 # simplify expression
-                expr = (expr_raw)
-                # opL_sym = combsimp(powsimp(trigsimp(expand(expr_raw))))   # alternative method
+                expr = expr_raw
+                try:
+                    with Watchdog(SIMPIFY_TIMEOUT):
+                        expr = expand(expr)
+                        print(colored('expand!', 'yellow'), end=' ', flush=True)
+
+                        expr = factor(expr)
+                        print(colored('factor!', 'yellow'), end=' ', flush=True)
+
+                        expr = trigsimp(expr)
+                        print(colored('trigsimp!', 'yellow'), end=' ', flush=True)
+
+                        expr = powsimp(expr)
+                        print(colored('powsimp!', 'yellow'), end=' ', flush=True)
+
+                        expr = combsimp(expr)
+                        print(colored('combsimp!', 'yellow'), end=' ', flush=True)
+                except Watchdog:
+                    expr = expr_raw
+                    print(colored(' Faild simplify ijk={0}{1}{2}'.format(i, j, k), 'red'), end=' ', flush=True)
+         
+                # expr = combsimp(powsimp(trigsimp(expand(expr_raw))))   # alternative method
                 len_expr = len(str(expr))
 
                 # make record about zeros elements (for removing zeros columns)
@@ -67,20 +91,28 @@ def computeRegressorElements():
                 # for l in range(n):
                 #     opL_sym = opL_sym.subs(thi[l], theta[l])
 
+                expr = expr.subs(dict(zip(thi, theta)))
+
                 # generate python code
                 py_expr_raw = sympy.printing.lambdarepr.lambdarepr(expr)
 
                 # some replaces, e.g. a_1 to a[0], Derivative(q_1(t), t) to dq[0]
                 py_expr = python_gencode(py_expr_raw)  # see in lins/regexps.py
 
+                regressorScilab.write('xi{0}{1}{2} = {3};\n'.format(j+1,i+1,k+1, py_expr))
+
                 regressorElement.addOpL(k, py_expr)
 
                 et = timedelta(seconds=time.time() - st)
-                print('--ji={0}{1}, k={2} function computed for {3:>15}\n\tSimplify length of expression from {4} to {5}'.format(j, i, k, str(et), len_expr_raw,len_expr))
+                print('\n\tFunction computed for {3:>15}'.format(j, i, k, str(et)))
+                print('\tSimplify length of expression from {0} to {1}'.format(len_expr_raw,len_expr)) 
+
             writeFile(PATH + 'xi_{0}{1}.py'.format(j, i), str(regressorElement))
             end_time = timedelta(seconds=time.time() - start_time)
             print(colored('-Regressor element {0}{1} computed for {2:>15}'.format(j, i, str(end_time)), 'green'), '\n***')
     print(colored('End computing of regressor {:}'.format(time.ctime()), 'magenta'))
+
+    regressorScilab.close()
 
     # Файл с нулевыми элементами, в котором можно узреть нулевые столбцы
     np.savetxt(PATH + 'zeros_in_regressor.txt', zeros_in_regressor)
