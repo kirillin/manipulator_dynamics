@@ -1,9 +1,10 @@
 clc();
 clear;
-N = 50;
+N = 20;
+p = 2;
 for i = 1:N
-    name = "/media/data/evo/robotics_report/symbolic_computation/data_for_identification/ee/EE" + string(i-1) + ".txt";
-    r = read(name, -1, 5);
+    name = "/media/data/evo/manipulator_dynamics/data_for_identification_2dof/ee/EE" + string(i-1) + ".txt";
+    r = read(name, -1, p);
     EE1(:,:,i) = r'
 end
 s = size(EE1(:,:,N));
@@ -15,7 +16,7 @@ function init = converter(cols)
     //cols in scilab index numeration, i.e. starting with 1
     //init in python index numeration, i.e. starting with 0
 //    no =  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 17, 18, 20, 28, 31, 32, 42, 44, 45, 46, 15, 14]+1;
-    no = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 20, 28, 31, 32, 44, 45, 46, 47] + 1;
+    no = [3,4,5,7,8,9,16,18,20,21,22,23 ,0,1,6] + 1;
     ind = 0;
     for i = 1:70
         in = %t;
@@ -44,18 +45,27 @@ function make_combination(n,m, num)
             columns(1,pos) = i;
         end
         for j = 1:n_E
-            A((5*j-4):(5*j),pos) = Eh(:,i,j)
-            B((5*j-4):(5*j)) = aim_vect(:,j)
+            A((p*j-p+1):(p*j),pos) = Eh(:,i,j)
+            B((p*j-p+1):(p*j)) = aim_vect(:,j)
         end
         if m == 1 then
             if rank(A) >= rank([A,B]) then
-                k = linsolve(A,-B);
-                k = clean(k);
-                printf("Column No %2d (%d) is dependent on cols No", the_column, converter(the_column));
-                disp(columns);
-                printf("with koefficients");
-                disp(k');
-                printf("\n")
+                [x0, kerA] = linsolve(A,-B);
+                if %t then
+                    k = clean(x0);
+                    printf("Column No %2d (%d) is dependent on cols No\n", the_column, converter(the_column));
+
+                    for r = 1:length(k) do
+                        if k(r) <> 0.0 then
+                            printf("%d (%d)\t%f\n", columns(r), converter(columns(r)), k(r));
+                        end
+                    end;
+                    printf(' len(x0)=%d len(ker)=%d\n', length(x0), length(kerA))
+//                    disp(columns);
+//                    printf("with koefficients");
+//                    disp(k');
+//                    printf("\n")
+                 end
             end 
             flag = %t
         else
@@ -79,7 +89,7 @@ n_dots = size_E(3);
 nc = max(size(E(:,:,1)));
 
 for i = 1:nc
-    printf("checking of %d column:\n", i)
+//    printf("checking of %d column:\n", i)
     //prepare helpful variables
     for k = 1:n_dots
         aim_vect(:,k) = E(:,i,k);
@@ -96,8 +106,8 @@ for i = 1:nc
     //find linear dependence for i-th column
     for j = l:l
         n_E = N //ceil(j/5) 
-        A = zeros(n_E * 5, j);
-        B = zeros(n_E * 5, 1);
+        A = zeros(n_E * p, j);
+        B = zeros(n_E * p, 1);
         the_column = i;
         columns = zeros(1,j);
         pos = 0;

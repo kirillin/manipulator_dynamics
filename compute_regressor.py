@@ -53,26 +53,26 @@ def computeRegressorElements():
                 expr_raw = operatorL(L[i][k], j)
                 expr_raw = expr_raw[0] if expr_raw.is_Matrix else expr_raw
                 len_expr_raw = len(str(expr_raw))
-                print('\tL was calculated!', end=' ', flush=True)
+                print('\tL was calculated! ({0})'.format(len_expr_raw), end=' ', flush=True)
             
                 # simplify expression
                 expr = expr_raw
                 try:
                     with Watchdog(SIMPIFY_TIMEOUT):
                         expr = expand(expr)
-                        print(colored('expand!', 'yellow'), end=' ', flush=True)
+                        print(colored('expand!({0})'.format(len(str(expr))), 'yellow'), end=' ', flush=True)
 
                         expr = factor(expr)
-                        print(colored('factor!', 'yellow'), end=' ', flush=True)
+                        print(colored('factor!({0})'.format(len(str(expr))), 'yellow'), end=' ', flush=True)
 
                         expr = trigsimp(expr)
-                        print(colored('trigsimp!', 'yellow'), end=' ', flush=True)
+                        print(colored('trigsimp!({0})'.format(len(str(expr))), 'yellow'), end=' ', flush=True)
 
                         expr = powsimp(expr)
-                        print(colored('powsimp!', 'yellow'), end=' ', flush=True)
+                        print(colored('powsimp!({0})'.format(len(str(expr))), 'yellow'), end=' ', flush=True)
 
                         expr = combsimp(expr)
-                        print(colored('combsimp!', 'yellow'), end=' ', flush=True)
+                        print(colored('combsimp!({0})'.format(len(str(expr))), 'yellow'), end=' ', flush=True)
                 except Watchdog:
                     expr = expr_raw
                     print(colored(' Faild simplify ijk={0}{1}{2}'.format(i, j, k), 'red'), end=' ', flush=True)

@@ -23,6 +23,18 @@ def generateBigXisRaw(ident):
         print('Read {0} filt file {1}!'.format(i, datafileName))
         # # compute matrix
         Q, dQ, ddQ, Tau, T = ident.readIdentDataRaw(datafileName)
+
+        _Q, _dQ, _ddQ, _Tau, _T = [],[],[],[],[]
+        for i in range(len(Q)):
+            if i%50 == 0:
+                _Q.append(Q[i])
+                _dQ.append(dQ[i])
+                _ddQ.append(ddQ[i])
+                _Tau.append(Tau[i])
+                _T.append(T[i])
+
+        Q, dQ, ddQ, Tau, T = _Q, _dQ, _ddQ, _Tau, _T
+
         print('{0} {1} {2} {3}'.format(len(Q), len(dQ), len(ddQ), len(Tau)))
 
         bigXi = ident.getBigXi(Q, dQ, ddQ)
@@ -81,13 +93,21 @@ def getSD(chis):
 if __name__ == '__main__':
     delta = np.array(DELTA)
     ident = Identification(A, D, delta)
+    print('n = ', n)
+    print('G0 = ',  [0, 0, -g])
+    print('A = ', A)
+    print('D =', D)
+    print('ALPHA = ', ALPHA)
+    print('Deltas = ', delta)
+    print('Theta = ', thi)
+
 
     # 1. Выбросить лин. завис. столбцы
     # ident.writeEE2(PATH + '/randomBigXi/rndBigXiT.txt', 20)
     # ident.writeEE(EE_FILE_NAME, 20)
 
     # 2.
-    generateBigXisRaw(ident)
+    # generateBigXisRaw(ident)
     # generateBigXisFilt(ident)
     #
     # Chis = []
