@@ -15,7 +15,7 @@ from libs.initialization import *
 
 from libs.Watchdog import Watchdog
 
-SIMPIFY_TIMEOUT = 3 * 60 * 60 # [sec]
+SIMPIFY_TIMEOUT = 30 * 60 * 60 # [sec]
 PATH = 'regressors/' + manipulator + '_xi/'
 
 try:
@@ -48,22 +48,22 @@ def computeRegressorElements():
             for k in range(nL):
                 st = time.time()
                 print('--ji={0}{1}, k={2}'.format(j, i, k))
-                
+
                 # compute operator L of lagrange function for [i, k, j]
                 expr_raw = operatorL(L[i][k], j)
                 expr_raw = expr_raw[0] if expr_raw.is_Matrix else expr_raw
                 len_expr_raw = len(str(expr_raw))
                 print('\tL was calculated! ({0})'.format(len_expr_raw), end=' ', flush=True)
-            
+
                 # simplify expression
                 expr = expr_raw
                 try:
                     with Watchdog(SIMPIFY_TIMEOUT):
-                        expr = expand(expr)
-                        print(colored('expand!({0})'.format(len(str(expr))), 'yellow'), end=' ', flush=True)
-
-                        expr = factor(expr)
-                        print(colored('factor!({0})'.format(len(str(expr))), 'yellow'), end=' ', flush=True)
+                        # expr = expand(expr)
+                        # print(colored('expand!({0})'.format(len(str(expr))), 'yellow'), end=' ', flush=True)
+                        #
+                        # expr = factor(expr)
+                        # print(colored('factor!({0})'.format(len(str(expr))), 'yellow'), end=' ', flush=True)
 
                         expr = trigsimp(expr)
                         print(colored('trigsimp!({0})'.format(len(str(expr))), 'yellow'), end=' ', flush=True)
@@ -76,7 +76,7 @@ def computeRegressorElements():
                 except Watchdog:
                     expr = expr_raw
                     print(colored(' Faild simplify ijk={0}{1}{2}'.format(i, j, k), 'red'), end=' ', flush=True)
-         
+
                 # expr = combsimp(powsimp(trigsimp(expand(expr_raw))))   # alternative method
                 len_expr = len(str(expr))
 
@@ -105,7 +105,7 @@ def computeRegressorElements():
 
                 et = timedelta(seconds=time.time() - st)
                 print('\n\tFunction computed for {3:>15}'.format(j, i, k, str(et)))
-                print('\tSimplify length of expression from {0} to {1}'.format(len_expr_raw,len_expr)) 
+                print('\tSimplify length of expression from {0} to {1}'.format(len_expr_raw,len_expr))
 
             writeFile(PATH + 'xi_{0}{1}.py'.format(j, i), str(regressorElement))
             end_time = timedelta(seconds=time.time() - start_time)
@@ -133,4 +133,3 @@ if __name__ == '__main__':
     file = open(PATH + 'zeros_in_regressor.txt', 'r')
     zeros_in_regressor = np.loadtxt(file)
     computeRegressor(PATH, getZeroCols(zeros_in_regressor))
-

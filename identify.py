@@ -15,8 +15,8 @@ BIG_XIs_FILE_NAME = PATH + '/bigs/{:s}big_xi{:d}.txt'
 EE_FILE_NAME = PATH + '/ee/EE{:d}.txt'
 
 
-def generateBigXisRaw(ident):
-    for i in range(1, 2):
+def generateBigXisRaw(ident, s=1, e=2):
+    for i in range(s, e):
         datafileName = DATA_FILE_NAME.format(i, '')
         bigXiFileName = BIG_XIs_FILE_NAME.format('raw/', i)
         bigTauFileName = BIG_TAUs_FILE_NAME.format('raw/', i)
@@ -24,16 +24,17 @@ def generateBigXisRaw(ident):
         # # compute matrix
         Q, dQ, ddQ, Tau, T = ident.readIdentDataRaw(datafileName)
 
-        _Q, _dQ, _ddQ, _Tau, _T = [],[],[],[],[]
-        for i in range(len(Q)):
-            if i%50 == 0:
-                _Q.append(Q[i])
-                _dQ.append(dQ[i])
-                _ddQ.append(ddQ[i])
-                _Tau.append(Tau[i])
-                _T.append(T[i])
-
-        Q, dQ, ddQ, Tau, T = _Q, _dQ, _ddQ, _Tau, _T
+        #
+        # _Q, _dQ, _ddQ, _Tau, _T = [],[],[],[],[]
+        # for i in range(len(Q)):
+        #     if i%50 == 0:
+        #         _Q.append(Q[i])
+        #         _dQ.append(dQ[i])
+        #         _ddQ.append(ddQ[i])
+        #         _Tau.append(Tau[i])
+        #         _T.append(T[i])
+        #
+        # Q, dQ, ddQ, Tau, T = _Q, _dQ, _ddQ, _Tau, _T
 
         print('{0} {1} {2} {3}'.format(len(Q), len(dQ), len(ddQ), len(Tau)))
 
@@ -43,8 +44,8 @@ def generateBigXisRaw(ident):
         ident.writeBigXi(bigXiFileName, bigXi)
         ident.writeBigTau(bigTauFileName, bigTau)
 
-def generateBigXisFilt(ident):
-    for i in range(1, 2):
+def generateBigXisFilt(ident, s=1, e=2):
+    for i in range(s, e):
         datafileName = DATA_FILE_NAME.format(i, '_filt')
         bigXiFileName = BIG_XIs_FILE_NAME.format('filt/', i)
         bigTauFileName = BIG_TAUs_FILE_NAME.format('filt/', i)
@@ -108,7 +109,7 @@ if __name__ == '__main__':
 
     # 2.
     # generateBigXisRaw(ident)
-    # generateBigXisFilt(ident)
+    generateBigXisFilt(ident, s=2, e=10)
     #
     # Chis = []
     # for i in range(1,2):
@@ -166,4 +167,3 @@ if __name__ == '__main__':
     # plotChis(chis, ident.getWellColNums(), chisFilt, sd={'raw': sdRaw[0], 'filt': sdFilt[0]},
     #                                                 avg={'raw': sdRaw[2], 'filt': sdFilt[2]},
     #                                                 sdP=(sdRaw[1], sdFilt[1]))
-
