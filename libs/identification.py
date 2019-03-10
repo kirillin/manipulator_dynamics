@@ -79,10 +79,10 @@ class Identification:
             xiK = self.xi.getXiNumExCompressed(qs[k], dqs[k], ddqs[k])
             bigXi = np.concatenate((bigXi, xiK), axis=0)
             msgInfo = 'Collecting of bigXi. Progress: {:.2f} %'.format(k * 100. / m)
-            print(msgInfo)   # print(msgInfo, end='\n')
+            # print(msgInfo)   # print(msgInfo, end='\n')
         endTime = time.time()
-        printWastedTime(startTime, endTime, startTime - endTime,
-                                'Make big Xi:')
+        # printWastedTime(startTime, endTime, startTime - endTime,
+        #                         'Make big Xi:')
         return bigXi
 
     # def getBigXisLite(self, qs, dqs, ddqs):

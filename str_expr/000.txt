@@ -1,0 +1,1 @@
+a_1**2*Derivative(q_1(t), (t, 2))

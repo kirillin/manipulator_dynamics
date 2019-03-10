@@ -1,0 +1,1 @@
+-a_1*sin(Theta(q_2(t)))*Derivative(q_1(t), t)**2 - a_2*sin(2*Theta(q_2(t)))*Derivative(q_1(t), t)**2 - 8.931237971e-12*a_2*cos(2*Theta(q_1(t)))**2*Derivative(q_2(t), (t, 2)) + 2.0*a_2*Derivative(q_2(t), (t, 2)) - 9.82*cos(Theta(q_2(t)))
